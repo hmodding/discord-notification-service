@@ -1,0 +1,22 @@
+{
+  "name": "modding-discord-notification-server",
+  "version": "1.0.0",
+  "description": "Discord notification microservice for the RaftModding website.",
+  "main": "src/index.js",
+  "scripts": {
+    "dev": "ts-node ./src"
+  },
+  "author": "traxam",
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^4.0.3"
+  },
+  "dependencies": {
+    "@sentry/node": "^5.27.1",
+    "@sentry/tracing": "^5.27.1",
+    "@types/node": "^14.14.2",
+    "dotenv": "^8.2.0",
+    "winston": "^3.3.3",
+    "winston-transport": "^4.4.0"
+  }
+}
