@@ -5,6 +5,7 @@ import { createModuleLogger } from '../logger';
 import { Handlers } from '@sentry/node';
 import { validateModVersion } from './validation';
 import { ValidationError } from 'yup';
+import morgan from 'morgan';
 
 const logger = createModuleLogger('WebhookServer');
 
@@ -30,6 +31,9 @@ export class WebhookServer {
     const app = express();
 
     app.use(Handlers.requestHandler());
+    app.use(morgan('tiny', {
+      stream: {write: (string: string) => logger.http(string)}
+    }))
     app.use(json());
 
     app.post('/webhooks/mod/version', (req: Request, res: Response, next: NextFunction) => this.postModVersion(req, res, next));

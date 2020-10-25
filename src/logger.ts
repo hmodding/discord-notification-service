@@ -40,8 +40,12 @@ export function configureDefaultLogger(): void {
       new transports.File({ filename: 'combined.log' }),
       new transports.Console({
         format: format.combine(
-          format.simple(),
           format.colorize(),
+          format.align(),
+          format.printf((info) => {
+            let string = `${info.timestamp} [${info.module}] ${info.level}: ${info.stack !== undefined ? info.stack : info.message}`;
+            return string;
+          })
         ),
       }),
     ],
