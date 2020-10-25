@@ -1,5 +1,5 @@
-import * as Sentry from '@sentry/node';
-import * as Tracing from '@sentry/tracing';
+import { createModuleLogger } from './logger';
+const logger = createModuleLogger('sentry');
 
 const sentryDsn = process.env.SENTRY_DSN;
 if (!sentryDsn) {   

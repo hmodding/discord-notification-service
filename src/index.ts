@@ -1,8 +1,13 @@
-import logger from './logger';
+import { configureDefaultLogger, createModuleLogger } from './logger';
+import { config as configDotenv} from 'dotenv';
+
+configDotenv();
+configureDefaultLogger();
+const logger = createModuleLogger('index');
+
 logger.info('Starting up...')
 
 import { config } from 'dotenv';
 config();
 
-import './sentry';
-logger.info('Sentry configured.');
+logger.info('Startup complete!');
