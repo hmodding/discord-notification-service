@@ -13,6 +13,24 @@ export function createModuleLogger(module: string): Logger {
 }
 
 /**
+ * The length that module names will be padded / cut to.
+ */
+export const paddedModuleLength = 16;
+
+/**
+ * Pads / cuts a module name to the `paddedModuleLength`. 
+ * @param module the module name to pad.
+ * @remarks It is recommended to store the padded module name somewhere.
+ */
+function padModule(module: string): string {
+  if (module.length >= paddedModuleLength) {
+    return module.substr(0, paddedModuleLength)
+  } else {
+    return module + ' '.repeat(paddedModuleLength - module.length);
+  }
+}
+
+/**
  * Configures the default logger that is available through the winston module
  * itself.
  */
@@ -20,6 +38,9 @@ export function configureDefaultLogger(): void {
   const nodeEnv = process.env.NODE_ENV;
   // in production, log only info and below
   const defaultLevel = nodeEnv !== 'production' ? 'debug' : 'info';
+  const environment = nodeEnv !== 'production' ? 'development' : 'production';
+
+  const modulePaddingMap = new Map<string, string>();
 
   configure({
     level: defaultLevel,
@@ -34,6 +55,7 @@ export function configureDefaultLogger(): void {
     ),
     defaultMeta: {
       service: 'discord-notifications',
+      environment,
     },
     transports: [
       new transports.File({ filename: 'error.log', level: 'error' }),
@@ -41,9 +63,14 @@ export function configureDefaultLogger(): void {
       new transports.Console({
         format: format.combine(
           format.colorize(),
-          format.align(),
           format.printf((info) => {
-            let string = `${info.timestamp} [${info.module}] ${info.level}: ${info.stack !== undefined ? info.stack : info.message}`;
+            let module = modulePaddingMap.get(info.module);
+            if (module === undefined) {
+              module = padModule(info.module);
+              modulePaddingMap.set(info.module, module);
+            }
+
+            let string = `${info.timestamp} [${module}] ${info.level}: ${info.stack !== undefined ? info.stack : info.message}`;
             return string;
           })
         ),
