@@ -1,4 +1,5 @@
 import express, { json, NextFunction, Request, Response } from 'express';
+import basicAuth from 'express-basic-auth';
 import { Server } from 'http';
 import { ModVersion } from '../entities/ModVersion';
 import { createModuleLogger } from '../logger';
@@ -28,17 +29,40 @@ export class WebhookServer {
    */
   public constructor(options: WebhookServerOptions) {
     this.options = options;
+
+    const token = process.env.TOKEN;
+    if (token === undefined) {
+      if (process.env.NODE_ENV === 'production') {
+        throw new Error('Token (TOKEN env variable) is not configured!');
+      } else {
+        logger.warn('Token (TOKEN env variable) is not configured! API will be ' +
+          'available without authorization. This is only allowed in development environments.');
+      }
+    }
+
     const app = express();
 
+    // various middleware
     app.use(Handlers.requestHandler());
     app.use(morgan('tiny', {
       stream: {write: (string: string) => logger.http(string)}
     }))
     app.use(json());
 
+    // token authorization
+    if (token !== undefined) {
+      app.use(basicAuth({
+        users: {
+          user: token,
+        }
+      }))
+    }
+
+    // endpoints
     app.post('/webhooks/mod/version', (req: Request, res: Response, next: NextFunction) => this.postModVersion(req, res, next));
     app.use(this.notFound);
 
+    // error handlers
     app.use(Handlers.errorHandler());
     app.use(this.error);
 
