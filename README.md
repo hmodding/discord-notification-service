@@ -14,7 +14,7 @@ You'll need to define the following environment variables. Use a `.env` file in
 development environments only!
 
 | Variable Name | Description |
-| --- | --- | --- |
+| --- | --- |
 | `NODE_ENV` | Use `production` for production environments and anything else for development environments. |
 | `PORT` | The port to use for the http API server. |
 | `SENTRY_DSN` | Client key for sentry monitoring. |
