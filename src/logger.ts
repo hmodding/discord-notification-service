@@ -70,7 +70,7 @@ export function configureDefaultLogger(): void {
               modulePaddingMap.set(info.module, module);
             }
 
-            let string = `${info.timestamp} [${module}] ${info.level}: ${info.stack !== undefined ? info.stack : info.message}`;
+            let string = `${info.timestamp} [${module}] ${info.level}: ${info.stack !== undefined ? info.stack : info.message.trim()}`;
             return string;
           })
         ),
