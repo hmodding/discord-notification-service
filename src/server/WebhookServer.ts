@@ -10,7 +10,7 @@ import morgan from 'morgan';
 const logger = createModuleLogger('WebhookServer');
 
 interface WebhookServerOptions {
-  onModVersionRelease(version: ModVersion): void;
+  onModVersionRelease(version: ModVersion): Promise<void>;
 }
 
 /**

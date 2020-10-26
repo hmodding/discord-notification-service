@@ -15,11 +15,9 @@ if (process.env.NODE_ENV !== 'production') {
 logger.info('Starting up...');
 
 configureSentry();
+const notifier = new DiscordNotifier();
 new WebhookServer({
-  onModVersionRelease(version): void {
-    logger.info('on version release', version);
-  }
+  onModVersionRelease: version => notifier.sendModVersionReleaseNotification(version),      
 });
-new DiscordNotifier();
 
 logger.info('Startup complete!');
