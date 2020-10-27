@@ -1,6 +1,6 @@
 {
   "name": "@raftmodding/discord-notification-server",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Discord notification microservice for the RaftModding website.",
   "main": "src/index.js",
   "scripts": {
