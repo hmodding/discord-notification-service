@@ -1,5 +1,5 @@
 {
-  "name": "modding-discord-notification-server",
+  "name": "@raftmodding/discord-notification-server",
   "version": "1.0.0",
   "description": "Discord notification microservice for the RaftModding website.",
   "main": "src/index.js",
@@ -28,5 +28,8 @@
     "morgan": "^1.10.0",
     "winston": "^3.3.3",
     "yup": "^0.29.3"
+  },
+  "publishConfig": {
+    "@raftmodding:registry": "https://gitlab.com/api/v4/projects/21991779/packages/npm/"
   }
 }
