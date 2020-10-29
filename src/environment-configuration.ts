@@ -1,4 +1,4 @@
-import { Configuration, ModVersionNotificationConfiguration } from "./configuration";
+import { Configuration, LauncherVersionNotificationsConfiguration, ModVersionNotificationConfiguration } from "./configuration";
 
 /**
  * Reads the configuration from environment variables.
@@ -11,6 +11,7 @@ export function getConfiguration(): Configuration {
     port: getPort(),
     token: getToken(),
     modVersionNotifications: getModVersionNotifications(),
+    launcherVersionNotifications: getLauncherVersionNotifications(),
   }
 }
 
@@ -83,4 +84,38 @@ export function getModVersionNotifications(): ModVersionNotificationConfiguratio
   return {
       discordWebhookUrl: discordWebhook,
   }
+}
+
+/**
+ * Reads the launcher version notifications configuration from the
+ * `LAUNCHER_DISCORD_WEBHOOK`, `LAUNCHER_NAME` and `LAUNCHER_LOGO` environment
+ * variables.
+ * @throws an error if one of the values is invalid.
+ */
+export function getLauncherVersionNotifications(): LauncherVersionNotificationsConfiguration {
+  const discordWebhookUrl = process.env.LAUNCHER_DISCORD_WEBHOOK;
+  const name = process.env.LAUNCHER_NAME;
+  const logoUrl = process.env.LAUNCHER_LOGO;
+  const downloadUrl = process.env.LAUNCHER_DOWNLOAD;
+
+  if (!discordWebhookUrl) {
+    throw new Error('Discord launcher version notification webhook (LAUNCHER_DISCORD_WEBHOOK env variable) is not configured!');
+  }
+  if (!name) {
+    throw new Error('Launcher software name (LAUNCHER_NAME env variable) is not configured!');
+  }
+  if (!logoUrl) {
+    throw new Error('Launcher logo url (LAUNCHER_LOGO env variable) is not configured!');
+  }
+  if (!downloadUrl) {
+    throw new Error('Launcher download url (LAUNCHER_DOWNLOAD env variable) is not configured!');
+  }
+
+  return {
+    discordWebhookUrl,
+    name,
+    logoUrl,
+    downloadUrl,
+  }
+
 }
