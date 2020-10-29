@@ -28,6 +28,10 @@ export interface Configuration {
    * Configurable variables for the launcher version notifications.
    */
   launcherVersionNotifications: LauncherVersionNotificationsConfiguration;
+  /**
+   * Configurable variables for the mod loader version notifications.
+   */
+  loaderVersionNotifications: LoaderVersionNotificationsConfiguration;
 }
 
 /**
@@ -58,6 +62,24 @@ export interface LauncherVersionNotificationsConfiguration {
   logoUrl: string;
   /**
    * Discord webhook url to be used for launcher version release notifications.
+   */
+  discordWebhookUrl: string;
+}
+
+/**
+ * Configurable variables for mod loader version notifications.
+ */
+export interface LoaderVersionNotificationsConfiguration {
+  /**
+   * The name of the mod loader software.
+   */
+  name: string;
+  /**
+   * Logo image url.
+   */
+  logoUrl: string;
+  /**
+   * Discord webhook url to be used for mod loader version release notifications.
    */
   discordWebhookUrl: string;
 }
