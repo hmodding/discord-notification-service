@@ -2,6 +2,7 @@ import { MessageEmbed, Webhook, WebhookClient } from "discord.js";
 import { ModVersion } from "../entities/ModVersion";
 import { createModuleLogger } from "../logger";
 import * as Sentry from '@sentry/node';
+import { getModVersionNotifications } from "../environment-configuration";
 
 const logger = createModuleLogger('DiscordNotifier');
 
@@ -33,10 +34,7 @@ export class DiscordNotifier {
   private webhookClient: WebhookClient;
 
   public constructor() {
-    const webhookUrl = process.env.DISCORD_WEBHOOK;
-    if (webhookUrl === undefined) {
-      throw new Error('Discord webhook (DISCORD_WEBHOOK env variable) is not configured!');
-    }
+    const webhookUrl = getModVersionNotifications().discordWebhookUrl;
     const idAndToken = decomposeWebhookUrl(webhookUrl);
     this.webhookClient = new WebhookClient(idAndToken.id, idAndToken.token);
     logger.info('Discord Notifier started!');

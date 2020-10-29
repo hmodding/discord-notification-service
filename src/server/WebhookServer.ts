@@ -8,6 +8,7 @@ import { validateLauncherVersion, validateModVersion } from './validation';
 import { ValidationError } from 'yup';
 import morgan from 'morgan';
 import { LauncherVersion } from '../entities/LauncherVersion';
+import { getModVersionNotifications, getPort } from '../environment-configuration';
 
 const logger = createModuleLogger('WebhookServer');
 
@@ -32,15 +33,7 @@ export class WebhookServer {
   public constructor(options: WebhookServerOptions) {
     this.options = options;
 
-    const token = process.env.TOKEN;
-    if (token === undefined) {
-      if (process.env.NODE_ENV === 'production') {
-        throw new Error('Token (TOKEN env variable) is not configured!');
-      } else {
-        logger.warn('Token (TOKEN env variable) is not configured! API will be ' +
-          'available without authorization. This is only allowed in development environments.');
-      }
-    }
+    const token = getModVersionNotifications().discordWebhookUrl;
 
     const app = express();
 
@@ -58,6 +51,9 @@ export class WebhookServer {
           user: token,
         }
       }))
+    } else {
+      logger.warn('Token (TOKEN env variable) is not configured! API will be ' +
+        'available without authorization. This is only allowed in development environments.');
     }
 
     // endpoints
@@ -69,10 +65,7 @@ export class WebhookServer {
     app.use(Handlers.errorHandler());
     app.use(this.error);
 
-    const port = process.env.PORT;
-    if (port === undefined) {
-      throw new Error('Port (PORT env variable) is not specified!');
-    }
+    const port = getPort();
     this.server = app.listen(port, () => {
       logger.info(`Listening on port ${port}.`)
     });

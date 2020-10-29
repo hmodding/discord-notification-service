@@ -1,6 +1,7 @@
 import {
   transports, format, configure, Logger, child
 } from 'winston';
+import { getEnvironment } from './environment-configuration';
 
 /**
  * Creates a logger for a module with a given name.
@@ -35,10 +36,10 @@ function padModule(module: string): string {
  * itself.
  */
 export function configureDefaultLogger(): void {
-  const nodeEnv = process.env.NODE_ENV;
+  const environment = getEnvironment();
+  
   // in production, log only info and below
-  const defaultLevel = nodeEnv !== 'production' ? 'debug' : 'info';
-  const environment = nodeEnv !== 'production' ? 'development' : 'production';
+  const defaultLevel = environment === 'production' ? 'info' : 'debug';
 
   const modulePaddingMap = new Map<string, string>();
 
