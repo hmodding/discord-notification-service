@@ -3,8 +3,9 @@ import { ModVersion } from "../entities/ModVersion";
 import { createModuleLogger } from "../logger";
 import * as Sentry from '@sentry/node';
 import { LauncherVersion } from "../entities/LauncherVersion";
-import { getLauncherVersionNotifications, getModVersionNotifications } from "../environment-configuration";
-import { LauncherVersionNotificationsConfiguration, ModVersionNotificationConfiguration } from "../configuration";
+import { getLauncherVersionNotifications, getLoaderVersionNotifications, getModVersionNotifications } from "../environment-configuration";
+import { LauncherVersionNotificationsConfiguration, LoaderVersionNotificationsConfiguration, ModVersionNotificationConfiguration } from "../configuration";
+import { LoaderVersion } from "../entities/LoaderVersion";
 
 const logger = createModuleLogger('DiscordNotifier');
 
@@ -44,8 +45,10 @@ function createWebhookClientForUrl(url: string) {
 export class DiscordNotifier {
   private modConfig: ModVersionNotificationConfiguration;
   private launcherConfig: LauncherVersionNotificationsConfiguration;
+  private loaderConfig: LoaderVersionNotificationsConfiguration;
   private modVersionWebhookClient: WebhookClient;
   private launcherVersionWebhookClient: WebhookClient;
+  private loaderVersionWebhookClient: WebhookClient;
 
   public constructor() {
     this.modConfig = getModVersionNotifications();
@@ -55,6 +58,10 @@ export class DiscordNotifier {
     this.launcherConfig = getLauncherVersionNotifications();
     const launcherUrl = this.launcherConfig.discordWebhookUrl;
     this.launcherVersionWebhookClient = createWebhookClientForUrl(launcherUrl);
+
+    this.loaderConfig = getLoaderVersionNotifications();
+    const loaderUrl = this.loaderConfig.discordWebhookUrl;
+    this.loaderVersionWebhookClient = createWebhookClientForUrl(loaderUrl);
 
     logger.info('Discord Notifier started!');
   }
@@ -103,6 +110,28 @@ export class DiscordNotifier {
     try {
       await this.launcherVersionWebhookClient.send(embed);
       logger.debug(`Sent launcher version release notification for launcher v${version.version}.`);
+    } catch (error) {
+      Sentry.captureException(error);
+      logger.error(error);
+    }
+  }
+
+  /**
+   * Sends a mod loader version release notification to Discord.
+   * @param version the released mod loader version.
+   * @remarks DiscordAPIErrors will be logged but not thrown.
+   */
+  public async sendLoaderVersionReleaseNotification(version: LoaderVersion): Promise<void> {
+    const embed = new MessageEmbed()
+      .setTitle(this.loaderConfig.name)
+      .addField('Mod Loader Version', `[${version.version}](${version.url})`, true)
+      .addField('Game Version', version.gameVersion , true)
+      .addField('Changelog', version.changelog, false)
+      .setThumbnail(this.loaderConfig.logoUrl);
+
+    try {
+      await this.loaderVersionWebhookClient.send(embed);
+      logger.debug(`Sent mod loader version release notification for launcher v${version.version}.`);
     } catch (error) {
       Sentry.captureException(error);
       logger.error(error);

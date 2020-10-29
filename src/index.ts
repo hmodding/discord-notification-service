@@ -22,7 +22,7 @@ const notifier = new DiscordNotifier();
 new WebhookServer({
   onModVersionRelease: version => notifier.sendModVersionReleaseNotification(version),
   onLauncherVersionRelease: version => notifier.sendLauncherVersionReleaseNotification(version),
-  onLoaderVersionRelease: version => Promise.resolve(),
+  onLoaderVersionRelease: version => notifier.sendLoaderVersionReleaseNotification(version),
 });
 
 logger.info('Startup complete!');
