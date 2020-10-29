@@ -8,7 +8,7 @@ import { validateLauncherVersion, validateModVersion } from './validation';
 import { ValidationError } from 'yup';
 import morgan from 'morgan';
 import { LauncherVersion } from '../entities/LauncherVersion';
-import { getModVersionNotifications, getPort } from '../environment-configuration';
+import { getPort, getToken } from '../environment-configuration';
 
 const logger = createModuleLogger('WebhookServer');
 
@@ -33,7 +33,7 @@ export class WebhookServer {
   public constructor(options: WebhookServerOptions) {
     this.options = options;
 
-    const token = getModVersionNotifications().discordWebhookUrl;
+    const token = getToken();
 
     const app = express();
 
