@@ -2,7 +2,9 @@ import { MessageEmbed, Webhook, WebhookClient } from "discord.js";
 import { ModVersion } from "../entities/ModVersion";
 import { createModuleLogger } from "../logger";
 import * as Sentry from '@sentry/node';
-import { getModVersionNotifications } from "../environment-configuration";
+import { LauncherVersion } from "../entities/LauncherVersion";
+import { getLauncherVersionNotifications, getModVersionNotifications } from "../environment-configuration";
+import { LauncherVersionNotificationsConfiguration, ModVersionNotificationConfiguration } from "../configuration";
 
 const logger = createModuleLogger('DiscordNotifier');
 
@@ -30,13 +32,30 @@ export function decomposeWebhookUrl(url: string) {
     }
 }
 
+/**
+ * Creates a new webhook client for a given webhook URL.
+ * @param url the discord webhook URL.
+ */
+function createWebhookClientForUrl(url: string) {
+  const idAndToken = decomposeWebhookUrl(url);
+  return new WebhookClient(idAndToken.id, idAndToken.token);
+}
+
 export class DiscordNotifier {
-  private webhookClient: WebhookClient;
+  private modConfig: ModVersionNotificationConfiguration;
+  private launcherConfig: LauncherVersionNotificationsConfiguration;
+  private modVersionWebhookClient: WebhookClient;
+  private launcherVersionWebhookClient: WebhookClient;
 
   public constructor() {
-    const webhookUrl = getModVersionNotifications().discordWebhookUrl;
-    const idAndToken = decomposeWebhookUrl(webhookUrl);
-    this.webhookClient = new WebhookClient(idAndToken.id, idAndToken.token);
+    this.modConfig = getModVersionNotifications();
+    const modUrl = this.modConfig.discordWebhookUrl;
+    this.modVersionWebhookClient = createWebhookClientForUrl(modUrl);
+
+    this.launcherConfig = getLauncherVersionNotifications();
+    const launcherUrl = this.launcherConfig.discordWebhookUrl;
+    this.launcherVersionWebhookClient = createWebhookClientForUrl(launcherUrl);
+
     logger.info('Discord Notifier started!');
   }
 
@@ -60,8 +79,30 @@ export class DiscordNotifier {
     }
 
     try {
-      await this.webhookClient.send(embed);
+      await this.modVersionWebhookClient.send(embed);
       logger.debug(`Sent mod version release notification for mod ${version.modTitle} v${version.version}.`);
+    } catch (error) {
+      Sentry.captureException(error);
+      logger.error(error);
+    }
+  }
+
+  /**
+   * Sends a launcher version release notification to Discord.
+   * @param version the released launcher version.
+   * @remarks DiscordAPIErrors will be logged but not thrown.
+   */
+  public async sendLauncherVersionReleaseNotification(version: LauncherVersion): Promise<void> {
+    const embed = new MessageEmbed()
+      .setTitle(this.launcherConfig.name)
+      .setURL(this.launcherConfig.downloadUrl)
+      .addField('Version', `[${version.version}](${version.url})`, true)
+      .addField('Changelog', version.changelog, false)
+      .setThumbnail(this.launcherConfig.logoUrl);
+
+    try {
+      await this.launcherVersionWebhookClient.send(embed);
+      logger.debug(`Sent launcher version release notification for launcher v${version.version}.`);
     } catch (error) {
       Sentry.captureException(error);
       logger.error(error);
