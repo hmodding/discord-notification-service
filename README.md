@@ -3,7 +3,7 @@ This project is a microservice that sends notifications to discord webhooks.
 Notifications are triggered by webhooks to this project itself.
 
 # Development Setup
-You'll need to have Node.js v10 or higher as well as `npm`.
+You'll need to have Node.js v12 or higher as well as `npm`.
 
 1. Install dependencies: `npm install`
 2. [Configure](#Configuration) the application.
