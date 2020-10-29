@@ -17,7 +17,8 @@ logger.info('Starting up...');
 configureSentry();
 const notifier = new DiscordNotifier();
 new WebhookServer({
-  onModVersionRelease: version => notifier.sendModVersionReleaseNotification(version),      
+  onModVersionRelease: version => notifier.sendModVersionReleaseNotification(version),
+  onLauncherVersionRelease: version => Promise.resolve(), //TODO
 });
 
 logger.info('Startup complete!');

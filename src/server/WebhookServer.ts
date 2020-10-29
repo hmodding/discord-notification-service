@@ -4,14 +4,16 @@ import { Server } from 'http';
 import { ModVersion } from '../entities/ModVersion';
 import { createModuleLogger } from '../logger';
 import { Handlers } from '@sentry/node';
-import { validateModVersion } from './validation';
+import { validateLauncherVersion, validateModVersion } from './validation';
 import { ValidationError } from 'yup';
 import morgan from 'morgan';
+import { LauncherVersion } from '../entities/LauncherVersion';
 
 const logger = createModuleLogger('WebhookServer');
 
 interface WebhookServerOptions {
   onModVersionRelease(version: ModVersion): Promise<void>;
+  onLauncherVersionRelease(version: LauncherVersion): Promise<void>;
 }
 
 /**
@@ -60,6 +62,7 @@ export class WebhookServer {
 
     // endpoints
     app.post('/webhooks/mod/version', (req: Request, res: Response, next: NextFunction) => this.postModVersion(req, res, next));
+    app.post('/webhooks/launcher/version', (req: Request, res: Response, next: NextFunction) => this.postLauncherVersion(req, res, next));
     app.use(this.notFound);
 
     // error handlers
@@ -85,6 +88,22 @@ export class WebhookServer {
   private postModVersion(req: Request, res: Response, next: NextFunction): void {
     validateModVersion(req.body)
       .then(this.options.onModVersionRelease)
+      .then(() => {
+        res.status(200).json({success: true});
+      })
+      .catch(next);
+  }
+
+  /**
+   * Handles POST requests to the `/webhooks/launcher/version` endpoint.
+   * @param req the http request.
+   * @param res the http response.
+   * @param next the function to call to forward this request to the next
+   * handler.
+   */
+  private postLauncherVersion(req: Request, res: Response, next: NextFunction): void {
+    validateLauncherVersion(req.body)
+      .then(this.options.onLauncherVersionRelease)
       .then(() => {
         res.status(200).json({success: true});
       })

@@ -1,4 +1,5 @@
 import { string, object, boolean } from 'yup';
+import { LauncherVersion } from '../entities/LauncherVersion';
 import { ModVersion } from '../entities/ModVersion';
 
 const modVersionSchema = object().shape({
@@ -24,4 +25,22 @@ export async function validateModVersion(input: object): Promise<ModVersion> {
   return await modVersionSchema.validate(input, {
       stripUnknown: true,
   }) as ModVersion;
+}
+
+const launcherVersionSchema = object().shape({
+  version: string().required(),
+  changelog: string().required(),
+  url: string().url().required(),
+});
+
+/**
+ * Validates an input object as a launcher version.
+ * @param input the input to validate.
+ * @returns the launcher version - if it could be validated.
+ * @throws ValidationError - if the input is invalid.
+ */
+export async function validateLauncherVersion(input: object): Promise<LauncherVersion> {
+  return await launcherVersionSchema.validate(input, {
+    stripUnknown: true,
+  }) as LauncherVersion;
 }
