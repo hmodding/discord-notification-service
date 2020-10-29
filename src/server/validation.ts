@@ -48,6 +48,7 @@ export async function validateLauncherVersion(input: object): Promise<LauncherVe
 
 const loaderVersionSchema = object().shape({
   version: string().required(),
+  gameVersion: string().required(),
   changelog: string().required(),
   url: string().url().required(),
 }).required();

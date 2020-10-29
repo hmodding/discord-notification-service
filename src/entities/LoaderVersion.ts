@@ -7,6 +7,11 @@ export interface LoaderVersion {
    */
   version: string;
   /**
+   * A user-friendly name for the version of the modded game that the mod loader
+   * was compile.
+   */
+  gameVersion: string;
+  /**
    * Markdown-formatted changelog for this version.
    */
   changelog: string;
