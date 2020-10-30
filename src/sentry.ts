@@ -1,5 +1,6 @@
 import { init } from '@sentry/node';
 import '@sentry/tracing';
+import { getEnvironment, getSentryDsn } from './environment-configuration';
 import { createModuleLogger } from './logger';
 const logger = createModuleLogger('sentry');
 
@@ -7,17 +8,20 @@ const logger = createModuleLogger('sentry');
  * Configures Sentry with the SENTRY_DSN environment variable.
  */
 export function configureSentry(): void {
-  const sentryDsn = process.env.SENTRY_DSN;
-  if (!sentryDsn) {   
-    throw new Error('Sentry DSN (SENTRY_DSN env variable) is not configured!')
-  }
-
-  const environment = process.env.NODE_ENV !== 'production' ? 'development' : 'production';
+  const dsn = getSentryDsn();
+  const environment = getEnvironment();
 
   init({
-    dsn: process.env.SENTRY_DSN,
+    dsn,
     tracesSampleRate: 1.0,
     environment,
+    ignoreErrors: [
+      'ValidationError', // thrown by yup while validating request
+      'SyntaxError', // thrown by body-parse while parsing request JSON
+    ],
   });
   logger.info('Sentry configured!');
+
+
+
 }

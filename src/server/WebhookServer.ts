@@ -4,14 +4,21 @@ import { Server } from 'http';
 import { ModVersion } from '../entities/ModVersion';
 import { createModuleLogger } from '../logger';
 import { Handlers } from '@sentry/node';
-import { validateModVersion } from './validation';
+import {
+  validateLauncherVersion, validateModVersion, validateLoaderVersion
+} from './validation';
 import { ValidationError } from 'yup';
 import morgan from 'morgan';
+import { LauncherVersion } from '../entities/LauncherVersion';
+import { LoaderVersion } from '../entities/LoaderVersion';
+import { getPort, getToken } from '../environment-configuration';
 
 const logger = createModuleLogger('WebhookServer');
 
 interface WebhookServerOptions {
   onModVersionRelease(version: ModVersion): Promise<void>;
+  onLauncherVersionRelease(version: LauncherVersion): Promise<void>;
+  onLoaderVersionRelease(Version: LoaderVersion): Promise<void>;
 }
 
 /**
@@ -30,15 +37,7 @@ export class WebhookServer {
   public constructor(options: WebhookServerOptions) {
     this.options = options;
 
-    const token = process.env.TOKEN;
-    if (token === undefined) {
-      if (process.env.NODE_ENV === 'production') {
-        throw new Error('Token (TOKEN env variable) is not configured!');
-      } else {
-        logger.warn('Token (TOKEN env variable) is not configured! API will be ' +
-          'available without authorization. This is only allowed in development environments.');
-      }
-    }
+    const token = getToken();
 
     const app = express();
 
@@ -56,20 +55,22 @@ export class WebhookServer {
           user: token,
         }
       }))
+    } else {
+      logger.warn('Token (TOKEN env variable) is not configured! API will be ' +
+        'available without authorization. This is only allowed in development environments.');
     }
 
     // endpoints
     app.post('/webhooks/mod/version', (req: Request, res: Response, next: NextFunction) => this.postModVersion(req, res, next));
+    app.post('/webhooks/launcher/version', (req: Request, res: Response, next: NextFunction) => this.postLauncherVersion(req, res, next));
+    app.post('/webhooks/loader/version', (req: Request, res: Response, next: NextFunction) => this.postLoaderVersion(req, res, next));
     app.use(this.notFound);
 
     // error handlers
     app.use(Handlers.errorHandler());
     app.use(this.error);
 
-    const port = process.env.PORT;
-    if (port === undefined) {
-      throw new Error('Port (PORT env variable) is not specified!');
-    }
+    const port = getPort();
     this.server = app.listen(port, () => {
       logger.info(`Listening on port ${port}.`)
     });
@@ -85,6 +86,38 @@ export class WebhookServer {
   private postModVersion(req: Request, res: Response, next: NextFunction): void {
     validateModVersion(req.body)
       .then(this.options.onModVersionRelease)
+      .then(() => {
+        res.status(200).json({success: true});
+      })
+      .catch(next);
+  }
+
+  /**
+   * Handles POST requests to the `/webhooks/launcher/version` endpoint.
+   * @param req the http request.
+   * @param res the http response.
+   * @param next the function to call to forward this request to the next
+   * handler.
+   */
+  private postLauncherVersion(req: Request, res: Response, next: NextFunction): void {
+    validateLauncherVersion(req.body)
+      .then(this.options.onLauncherVersionRelease)
+      .then(() => {
+        res.status(200).json({success: true});
+      })
+      .catch(next);
+  }
+
+  /**
+   * Handles POST requests to the `/webhooks/loader/version` endpoint.
+   * @param req the http request.
+   * @param res the http response.
+   * @param next the function to call to forward this request to the next
+   * handler.
+   */
+  private postLoaderVersion(req: Request, res: Response, next: NextFunction): void {
+    validateLoaderVersion(req.body)
+      .then(this.options.onLoaderVersionRelease)
       .then(() => {
         res.status(200).json({success: true});
       })
@@ -124,7 +157,10 @@ export class WebhookServer {
       });
     } else {
       logger.error(err);
-      res.status(500).json({ error: 'Something went wrong on our end!' });
+      res.status(500).json({
+        error: 'ServerError',
+        message: 'Something went wrong on our end!',
+      });
     }
   }
 

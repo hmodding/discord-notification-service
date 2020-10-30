@@ -2,6 +2,17 @@ import { MessageEmbed, Webhook, WebhookClient } from "discord.js";
 import { ModVersion } from "../entities/ModVersion";
 import { createModuleLogger } from "../logger";
 import * as Sentry from '@sentry/node';
+import { LauncherVersion } from "../entities/LauncherVersion";
+import {
+  getLauncherVersionNotifications, getLoaderVersionNotifications,
+  getModVersionNotifications,
+  getPingCooldown
+} from "../environment-configuration";
+import { LauncherVersionNotificationsConfiguration,
+  LoaderVersionNotificationsConfiguration, ModVersionNotificationConfiguration
+} from "../Configuration";
+import { LoaderVersion } from "../entities/LoaderVersion";
+import { PingRateLimiter } from "./PingRateLimiter";
 
 const logger = createModuleLogger('DiscordNotifier');
 
@@ -29,16 +40,41 @@ export function decomposeWebhookUrl(url: string) {
     }
 }
 
+/**
+ * Creates a new webhook client for a given webhook URL.
+ * @param url the discord webhook URL.
+ */
+function createWebhookClientForUrl(url: string) {
+  const idAndToken = decomposeWebhookUrl(url);
+  return new WebhookClient(idAndToken.id, idAndToken.token);
+}
+
 export class DiscordNotifier {
-  private webhookClient: WebhookClient;
+  private pingRateLimiter: PingRateLimiter;
+
+  private modConfig: ModVersionNotificationConfiguration;
+  private launcherConfig: LauncherVersionNotificationsConfiguration;
+  private loaderConfig: LoaderVersionNotificationsConfiguration;
+
+  private modVersionWebhookClient: WebhookClient;
+  private launcherVersionWebhookClient: WebhookClient;
+  private loaderVersionWebhookClient: WebhookClient;
 
   public constructor() {
-    const webhookUrl = process.env.DISCORD_WEBHOOK;
-    if (webhookUrl === undefined) {
-      throw new Error('Discord webhook (DISCORD_WEBHOOK env variable) is not configured!');
-    }
-    const idAndToken = decomposeWebhookUrl(webhookUrl);
-    this.webhookClient = new WebhookClient(idAndToken.id, idAndToken.token);
+    this.pingRateLimiter = new PingRateLimiter(getPingCooldown());
+
+    this.modConfig = getModVersionNotifications();
+    const modUrl = this.modConfig.discordWebhookUrl;
+    this.modVersionWebhookClient = createWebhookClientForUrl(modUrl);
+
+    this.launcherConfig = getLauncherVersionNotifications();
+    const launcherUrl = this.launcherConfig.discordWebhookUrl;
+    this.launcherVersionWebhookClient = createWebhookClientForUrl(launcherUrl);
+
+    this.loaderConfig = getLoaderVersionNotifications();
+    const loaderUrl = this.loaderConfig.discordWebhookUrl;
+    this.loaderVersionWebhookClient = createWebhookClientForUrl(loaderUrl);
+
     logger.info('Discord Notifier started!');
   }
 
@@ -55,15 +91,77 @@ export class DiscordNotifier {
       .addField('Author', `[${version.modAuthorName}](${version.modAuthorUrl})`, true)
       .addField('Version', version.version, true)
       .addField('Changelog', version.changelog, false)
-      .setThumbnail(version.modIconUrl);
+      .setThumbnail(version.modIconUrl)
 
     if (version.initial) {
       embed.setImage(version.modBannerUrl);
     }
 
     try {
-      await this.webhookClient.send(embed);
+      const roleId = this.modConfig.discordRolePingId;
+      if (roleId && this.pingRateLimiter.canPing(roleId)) {
+        await this.modVersionWebhookClient.send(`<@&${roleId}>`, embed);
+        this.pingRateLimiter.ping(roleId)
+      } else {
+        await this.modVersionWebhookClient.send(embed);
+      }
       logger.debug(`Sent mod version release notification for mod ${version.modTitle} v${version.version}.`);
+    } catch (error) {
+      Sentry.captureException(error);
+      logger.error(error);
+    }
+  }
+
+  /**
+   * Sends a launcher version release notification to Discord.
+   * @param version the released launcher version.
+   * @remarks DiscordAPIErrors will be logged but not thrown.
+   */
+  public async sendLauncherVersionReleaseNotification(version: LauncherVersion): Promise<void> {
+    const embed = new MessageEmbed()
+      .setTitle(this.launcherConfig.name)
+      .setURL(this.launcherConfig.downloadUrl)
+      .addField('Version', `[${version.version}](${version.url})`, true)
+      .addField('Changelog', version.changelog, false)
+      .setThumbnail(this.launcherConfig.logoUrl);
+
+    try {
+      const roleId = this.launcherConfig.discordRolePingId;
+      if (roleId && this.pingRateLimiter.canPing(roleId)) {
+        await this.launcherVersionWebhookClient.send(`<@&${roleId}>`, embed);
+        this.pingRateLimiter.ping(roleId);
+      } else {
+        await this.launcherVersionWebhookClient.send(embed);
+      }
+      logger.debug(`Sent launcher version release notification for launcher v${version.version}.`);
+    } catch (error) {
+      Sentry.captureException(error);
+      logger.error(error);
+    }
+  }
+
+  /**
+   * Sends a mod loader version release notification to Discord.
+   * @param version the released mod loader version.
+   * @remarks DiscordAPIErrors will be logged but not thrown.
+   */
+  public async sendLoaderVersionReleaseNotification(version: LoaderVersion): Promise<void> {
+    const embed = new MessageEmbed()
+      .setTitle(this.loaderConfig.name)
+      .addField('Mod Loader Version', `[${version.version}](${version.url})`, true)
+      .addField('Game Version', version.gameVersion , true)
+      .addField('Changelog', version.changelog, false)
+      .setThumbnail(this.loaderConfig.logoUrl);
+
+    try {
+      const roleId = this.loaderConfig.discordRolePingId;
+      if (roleId && this.pingRateLimiter.canPing(roleId)) {
+        await this.loaderVersionWebhookClient.send(`<@&${roleId}>`, embed);
+        this.pingRateLimiter.ping(roleId);
+      } else {
+        await this.loaderVersionWebhookClient.send(embed);
+      }
+      logger.debug(`Sent mod loader version release notification for launcher v${version.version}.`);
     } catch (error) {
       Sentry.captureException(error);
       logger.error(error);
