@@ -19,7 +19,7 @@ You'll need to have Node.js v12 or higher as well as `npm`.
 3. Run in development mode `npm run dev`
 
 ## API
-All functionality of this service is available via a REST API.
+All functionality of this service is available via a REST API. You can use the [`discord-notification-service-client`](https://gitlab.com/raftmodding/discord-notification-client) package to access the API from a JS/TS environment.
 
 ### Authorization
 All API calls must be authorized. The API will respond with `401 Unauthorized` and no response body to calls that have (a) no credentials or (b) invalid credentials.
