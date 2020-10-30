@@ -7,6 +7,7 @@ Notifications are triggered by webhooks to this project itself.
 * [API](#API)
   * [Authorization](#Authorization)
   * [Endpoints](#Endpoints)
+  * [Errors](#Errors)
 * [Configuration](#Configuration)
 * [License](#License)
 
@@ -33,6 +34,24 @@ The following endpoints are available on an http server on the host of this appl
 | `/webhooks/mod/version` | Post a mod version release notification | [ModVersion](./src/entities/ModVersion.ts)
 | `/webhooks/loader/version` | Post a mod loader version release notification | [LoaderVersion](./src/entities/LoaderVersion.ts) |
 | `/webhooks/launcher/version` | Post a launcher version release notification | [LauncherVersion](./src/entities/LauncherVersion.ts) |
+
+### Errors
+The API might respond with an error object that might or might not be caused by your request. Server errors are indicated by a `5xx` status code and faulty requests are indicated by a `4xx` status codes. Error objects have the following structure:
+
+```json
+{
+    "error": "<ErrorType>",
+    "message": "<An explanation what's wrong.>"
+}
+```
+
+Common error types:
+| Status code | Error type | Explanation |
+| --- | --- | --- |
+| `404` | `NotFound` | You requested a route that does not exist or used the wrong http verb. |
+| `400` | `ValidationError` | Your request object does not fulfill the specified schema. |
+| `400` | `SyntaxError` | Your request object does not have a valid JSON body. |
+| `500` | `ServerError` | Something went wrong on our end. If this issue persists, please [open an issue](https://gitlab.com/raftmodding/discord-notification-service/-/issues/new) to let us know. |
 
 ## Configuration
 You'll need to define the following environment variables. Use a `.env` file in
