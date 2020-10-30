@@ -1,4 +1,7 @@
-import { Configuration, LauncherVersionNotificationsConfiguration, LoaderVersionNotificationsConfiguration, ModVersionNotificationConfiguration } from "./configuration";
+import {
+  Configuration, LauncherVersionNotificationsConfiguration,
+  LoaderVersionNotificationsConfiguration, ModVersionNotificationConfiguration
+} from "./Configuration";
 
 /**
  * Reads the configuration from environment variables.
@@ -72,7 +75,7 @@ export function getToken(): string | undefined {
 
 /**
  * Reads the mod version notification configuration from the `DISCORD_WEBHOOK`
- * environment variable.
+ * and `MOD_DISCORD_ROLE` environment variables.
  * @throws an error if the discord webhook is not configured.
  */
 export function getModVersionNotifications(): ModVersionNotificationConfiguration {
@@ -84,12 +87,13 @@ export function getModVersionNotifications(): ModVersionNotificationConfiguratio
 
   return {
       discordWebhookUrl: discordWebhook,
+      discordRolePingId: validateDiscordRoleId('MOD_DISCORD_ROLE'),
   }
 }
 
 /**
  * Reads the launcher version notifications configuration from the
- * `LAUNCHER_DISCORD_WEBHOOK`, `LAUNCHER_NAME` and `LAUNCHER_LOGO` environment
+ * `LAUNCHER_DISCORD_WEBHOOK`, `LAUNCHER_NAME`, `LAUNCHER_LOGO` and `LAUNCHER_DISCORD_ROLE` environment
  * variables.
  * @throws an error if one of the values is invalid.
  */
@@ -117,12 +121,14 @@ export function getLauncherVersionNotifications(): LauncherVersionNotificationsC
     name,
     logoUrl,
     downloadUrl,
+    discordRolePingId: validateDiscordRoleId('LAUNCHER_DISCORD_ROLE'),
   }
 }
 
 /**
  * Reads the mod loader version notifications configuration from the
- * `LOADER_DISCORD_WEBHOOK`, `LOADER_NAME`, `` environment variables.
+ * `LOADER_DISCORD_WEBHOOK`, `LOADER_NAME`, `LOADER_LOGO` and
+ * `LOADER_DISCORD_ROLE` environment variables.
  * @throws an error if one of the values is invalid.
  */
 export function getLoaderVersionNotifications(): LoaderVersionNotificationsConfiguration {
@@ -144,5 +150,18 @@ export function getLoaderVersionNotifications(): LoaderVersionNotificationsConfi
     discordWebhookUrl,
     name,
     logoUrl,
+    discordRolePingId: validateDiscordRoleId('LOADER_DISCORD_ROLE'),
   }
+}
+
+/**
+ * Gets a role id from an environment variable and validates it.
+ * @param envKey the name of the environment variable.
+ */
+function validateDiscordRoleId(envKey: string): string | undefined {
+  const id = process.env[envKey];
+  if (id !== undefined && !/^\d*$/.test(id)) {
+    throw new Error(`Role id '${id}' (${envKey} env variable) is invalid!`);
+  }
+  return id;
 }
