@@ -42,6 +42,11 @@ export interface ModVersionNotificationConfiguration {
    * The discord webhook url to be used for mod version release notifications.
    */
   discordWebhookUrl: string;
+  /**
+   * Discord role id to be mentioned in mod version release notifications. If
+   * none is specified, role pings will be omitted.
+   */
+  discordRolePingId?: string;
 }
 
 /**
@@ -64,6 +69,11 @@ export interface LauncherVersionNotificationsConfiguration {
    * Discord webhook url to be used for launcher version release notifications.
    */
   discordWebhookUrl: string;
+  /**
+   * Discord role id to be mentioned in launcher version release notifications.
+   * If none is specified, role pings will be omitted.
+   */
+  discordRolePingId?: string;
 }
 
 /**
@@ -82,4 +92,9 @@ export interface LoaderVersionNotificationsConfiguration {
    * Discord webhook url to be used for mod loader version release notifications.
    */
   discordWebhookUrl: string;
+  /**
+   * Discord role id to be mentioned in mod loader version release
+   * notifications. If none is specified, role pings will be omitted.
+   */
+  discordRolePingId?: string;
 }

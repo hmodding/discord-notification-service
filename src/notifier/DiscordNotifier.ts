@@ -3,8 +3,13 @@ import { ModVersion } from "../entities/ModVersion";
 import { createModuleLogger } from "../logger";
 import * as Sentry from '@sentry/node';
 import { LauncherVersion } from "../entities/LauncherVersion";
-import { getLauncherVersionNotifications, getLoaderVersionNotifications, getModVersionNotifications } from "../environment-configuration";
-import { LauncherVersionNotificationsConfiguration, LoaderVersionNotificationsConfiguration, ModVersionNotificationConfiguration } from "../configuration";
+import {
+  getLauncherVersionNotifications, getLoaderVersionNotifications,
+  getModVersionNotifications
+} from "../environment-configuration";
+import { LauncherVersionNotificationsConfiguration,
+  LoaderVersionNotificationsConfiguration, ModVersionNotificationConfiguration
+} from "../Configuration";
 import { LoaderVersion } from "../entities/LoaderVersion";
 
 const logger = createModuleLogger('DiscordNotifier');
