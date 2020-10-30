@@ -84,14 +84,18 @@ export class DiscordNotifier {
       .addField('Author', `[${version.modAuthorName}](${version.modAuthorUrl})`, true)
       .addField('Version', version.version, true)
       .addField('Changelog', version.changelog, false)
-      .setThumbnail(version.modIconUrl);
+      .setThumbnail(version.modIconUrl)
 
     if (version.initial) {
       embed.setImage(version.modBannerUrl);
     }
 
     try {
-      await this.modVersionWebhookClient.send(embed);
+      if (this.modConfig.discordRolePingId) {
+        await this.modVersionWebhookClient.send(`<@&${this.modConfig.discordRolePingId}>`, embed);
+      } else {
+        await this.modVersionWebhookClient.send(embed);
+      }
       logger.debug(`Sent mod version release notification for mod ${version.modTitle} v${version.version}.`);
     } catch (error) {
       Sentry.captureException(error);
@@ -113,7 +117,11 @@ export class DiscordNotifier {
       .setThumbnail(this.launcherConfig.logoUrl);
 
     try {
-      await this.launcherVersionWebhookClient.send(embed);
+      if (this.launcherConfig.discordRolePingId) {
+        await this.launcherVersionWebhookClient.send(`<@&${this.launcherConfig.discordRolePingId}>`, embed);
+      } else {
+        await this.launcherVersionWebhookClient.send(embed);
+      }
       logger.debug(`Sent launcher version release notification for launcher v${version.version}.`);
     } catch (error) {
       Sentry.captureException(error);
@@ -135,7 +143,11 @@ export class DiscordNotifier {
       .setThumbnail(this.loaderConfig.logoUrl);
 
     try {
-      await this.loaderVersionWebhookClient.send(embed);
+      if (this.loaderConfig.discordRolePingId) {
+        await this.loaderVersionWebhookClient.send(`<@&${this.loaderConfig.discordRolePingId}>`, embed);
+      } else {
+        await this.loaderVersionWebhookClient.send(embed);
+      }
       logger.debug(`Sent mod loader version release notification for launcher v${version.version}.`);
     } catch (error) {
       Sentry.captureException(error);
