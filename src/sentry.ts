@@ -15,6 +15,13 @@ export function configureSentry(): void {
     dsn,
     tracesSampleRate: 1.0,
     environment,
+    ignoreErrors: [
+      'ValidationError', // thrown by yup while validating request
+      'SyntaxError', // thrown by body-parse while parsing request JSON
+    ],
   });
   logger.info('Sentry configured!');
+
+
+
 }
