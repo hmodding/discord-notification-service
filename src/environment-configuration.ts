@@ -16,6 +16,7 @@ export function getConfiguration(): Configuration {
     modVersionNotifications: getModVersionNotifications(),
     launcherVersionNotifications: getLauncherVersionNotifications(),
     loaderVersionNotifications: getLoaderVersionNotifications(),
+    pingCooldown: getPingCooldown(),
   }
 }
 
@@ -71,6 +72,24 @@ export function getToken(): string | undefined {
   }
 
   return token;
+}
+
+/**
+ * Reads the ping cooldown from the `PING_COOLDOWN` environment variable.
+ * @throws an error if the ping cooldown is not a number.
+ */
+export function getPingCooldown(): number {
+  const cooldownString = process.env.PING_COOLDOWN;
+  if (cooldownString === undefined) {
+    throw new Error('Ping cooldown (PING_COOLDOWN env variable) is not configured!');
+  }
+
+  const cooldown = parseInt(cooldownString, 10);
+  if (cooldown === NaN) {
+    throw new Error('Ping cooldown (PING_COOLDOWN env variable) is not a number!'); 
+  }
+
+  return cooldown;
 }
 
 /**

@@ -21,6 +21,10 @@ export interface Configuration {
    */
   token: string | undefined;
   /**
+   * The minimum amount of time between pinging a role (in milliseconds).
+   */
+  pingCooldown: number;
+  /**
    * Configurable variables for the mod version notifications.
    */
   modVersionNotifications: ModVersionNotificationConfiguration;

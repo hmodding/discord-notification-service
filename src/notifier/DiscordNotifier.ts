@@ -5,12 +5,14 @@ import * as Sentry from '@sentry/node';
 import { LauncherVersion } from "../entities/LauncherVersion";
 import {
   getLauncherVersionNotifications, getLoaderVersionNotifications,
-  getModVersionNotifications
+  getModVersionNotifications,
+  getPingCooldown
 } from "../environment-configuration";
 import { LauncherVersionNotificationsConfiguration,
   LoaderVersionNotificationsConfiguration, ModVersionNotificationConfiguration
 } from "../Configuration";
 import { LoaderVersion } from "../entities/LoaderVersion";
+import { PingRateLimiter } from "./PingRateLimiter";
 
 const logger = createModuleLogger('DiscordNotifier');
 
@@ -48,14 +50,19 @@ function createWebhookClientForUrl(url: string) {
 }
 
 export class DiscordNotifier {
+  private pingRateLimiter: PingRateLimiter;
+
   private modConfig: ModVersionNotificationConfiguration;
   private launcherConfig: LauncherVersionNotificationsConfiguration;
   private loaderConfig: LoaderVersionNotificationsConfiguration;
+
   private modVersionWebhookClient: WebhookClient;
   private launcherVersionWebhookClient: WebhookClient;
   private loaderVersionWebhookClient: WebhookClient;
 
   public constructor() {
+    this.pingRateLimiter = new PingRateLimiter(getPingCooldown());
+
     this.modConfig = getModVersionNotifications();
     const modUrl = this.modConfig.discordWebhookUrl;
     this.modVersionWebhookClient = createWebhookClientForUrl(modUrl);
@@ -91,8 +98,10 @@ export class DiscordNotifier {
     }
 
     try {
-      if (this.modConfig.discordRolePingId) {
-        await this.modVersionWebhookClient.send(`<@&${this.modConfig.discordRolePingId}>`, embed);
+      const roleId = this.modConfig.discordRolePingId;
+      if (roleId && this.pingRateLimiter.canPing(roleId)) {
+        await this.modVersionWebhookClient.send(`<@&${roleId}>`, embed);
+        this.pingRateLimiter.ping(roleId)
       } else {
         await this.modVersionWebhookClient.send(embed);
       }
@@ -117,8 +126,10 @@ export class DiscordNotifier {
       .setThumbnail(this.launcherConfig.logoUrl);
 
     try {
-      if (this.launcherConfig.discordRolePingId) {
-        await this.launcherVersionWebhookClient.send(`<@&${this.launcherConfig.discordRolePingId}>`, embed);
+      const roleId = this.launcherConfig.discordRolePingId;
+      if (roleId && this.pingRateLimiter.canPing(roleId)) {
+        await this.launcherVersionWebhookClient.send(`<@&${roleId}>`, embed);
+        this.pingRateLimiter.ping(roleId);
       } else {
         await this.launcherVersionWebhookClient.send(embed);
       }
@@ -143,8 +154,10 @@ export class DiscordNotifier {
       .setThumbnail(this.loaderConfig.logoUrl);
 
     try {
-      if (this.loaderConfig.discordRolePingId) {
-        await this.loaderVersionWebhookClient.send(`<@&${this.loaderConfig.discordRolePingId}>`, embed);
+      const roleId = this.loaderConfig.discordRolePingId;
+      if (roleId && this.pingRateLimiter.canPing(roleId)) {
+        await this.loaderVersionWebhookClient.send(`<@&${roleId}>`, embed);
+        this.pingRateLimiter.ping(roleId);
       } else {
         await this.loaderVersionWebhookClient.send(embed);
       }
